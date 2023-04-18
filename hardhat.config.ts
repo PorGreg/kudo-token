@@ -10,23 +10,15 @@ dotenv.config()
 const { PRIVATE_KEY, API_URL } = process.env
 
 const config: HardhatUserConfig = {
-  defaultNetwork: 'goerli',
+  defaultNetwork: 'sepolia',
   networks: {
     hardhat: {},
-    goerli: {
+    sepolia: {
       url: API_URL,
       accounts: [`0x${PRIVATE_KEY}`],
     },
   },
-  solidity: {
-    version: '0.8.18',
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
-      },
-    },
-  },
+  solidity: '0.8.18',
 }
 
 export default config
