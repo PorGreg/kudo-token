@@ -14,8 +14,8 @@ contract KudoToken is ERC721, ERC721URIStorage, Ownable {
 
     constructor() ERC721('KudoToken', 'KT') {}
 
-    function addMintable(address to, uint16 amount) public onlyOwner {
-        mintable[to] += amount;
+    function setMintable(address to, uint16 amount) public onlyOwner {
+        mintable[to] = amount;
     }
 
     function safeMint(

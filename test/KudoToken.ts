@@ -19,8 +19,8 @@ describe('KudoToken', () => {
     return { kudoToken, mainAccount, accounts }
   }
 
-  async function addMintableAmountTo(address: string, amount: number) {
-    await kudoToken.addMintable(address, amount)
+  async function setMintableAmountTo(address: string, amount: number) {
+    await kudoToken.setMintable(address, amount)
   }
 
   beforeEach(async () => {
@@ -31,13 +31,24 @@ describe('KudoToken', () => {
     accounts = deployResult.accounts
   })
 
+  describe('Allowance', () => {
+    it('Should have 2 mintable coins for account1', async () => {
+      await setMintableAmountTo(accounts[0].address, 2)
+      expect(await kudoToken.mintable(accounts[0].address)).to.be.equal(2)
+    })
+
+    it('Should have 0 mintable coins after 2 set for account1', async () => {
+      expect(await kudoToken.mintable(accounts[0].address)).to.be.equal(0)
+      await setMintableAmountTo(accounts[0].address, 2)
+      expect(await kudoToken.mintable(accounts[0].address)).to.be.equal(2)
+      await setMintableAmountTo(accounts[0].address, 0)
+      expect(await kudoToken.mintable(accounts[0].address)).to.be.equal(0)
+    })
+  })
+
   describe('Minting', () => {
     describe('With mintable', () => {
-      beforeEach(() => addMintableAmountTo(accounts[0].address, 2))
-
-      it('Should have 2 mintable coins for account1', async () => {
-        expect(await kudoToken.mintable(accounts[0].address)).to.be.equal(2)
-      })
+      beforeEach(() => setMintableAmountTo(accounts[0].address, 2))
 
       it('Should mint 1 Kudo successfully', async () => {
         await kudoToken.safeMint(accounts[0].address, 'uri')
@@ -69,7 +80,7 @@ describe('KudoToken', () => {
 
   describe('Transfering', () => {
     beforeEach(async () => {
-      await addMintableAmountTo(accounts[0].address, 1)
+      await setMintableAmountTo(accounts[0].address, 1)
       await kudoToken.safeMint(accounts[0].address, 'uri')
     })
 
