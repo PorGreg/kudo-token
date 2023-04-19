@@ -33,7 +33,7 @@ const handler: NextApiHandler = async (req, res) => {
       await kudoToken.callStatic.safeMint(...params)
       // final call
       const result = await kudoToken.safeMint(...params)
-      return res.status(200).json(result)
+      return res.status(200).json({ result })
     } catch (e: any) {
       console.error(e)
       const message = e.reason ?? 'Unknown error'
