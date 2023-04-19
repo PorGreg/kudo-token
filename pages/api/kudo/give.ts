@@ -24,10 +24,15 @@ const handler: NextApiHandler = async (req, res) => {
     // mint token with the metadata URL
     const kudoToken = getKudoTokenContract()
     try {
+      const params: Parameters<typeof kudoToken.safeMint> = [
+        kudoData.fromAddress,
+        kudoData.toAddress,
+        metadataIpfs,
+      ]
       // static call first to check possible errors
-      await kudoToken.callStatic.safeMint(kudoData.toAddress, metadataIpfs)
+      await kudoToken.callStatic.safeMint(...params)
       // final call
-      const result = await kudoToken.safeMint(kudoData.toAddress, metadataIpfs)
+      const result = await kudoToken.safeMint(...params)
       return res.status(200).json(result)
     } catch (e: any) {
       console.error(e)

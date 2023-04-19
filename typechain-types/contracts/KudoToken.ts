@@ -34,11 +34,12 @@ export interface KudoTokenInterface extends utils.Interface {
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "mintable(address)": FunctionFragment;
+    "minted(address)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "ownerOf(uint256)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
-    "safeMint(address,string)": FunctionFragment;
+    "safeMint(address,address,string)": FunctionFragment;
     "safeTransferFrom(address,address,uint256)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -57,6 +58,7 @@ export interface KudoTokenInterface extends utils.Interface {
       | "getApproved"
       | "isApprovedForAll"
       | "mintable"
+      | "minted"
       | "name"
       | "owner"
       | "ownerOf"
@@ -93,6 +95,10 @@ export interface KudoTokenInterface extends utils.Interface {
     functionFragment: "mintable",
     values: [PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "minted",
+    values: [PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -105,7 +111,11 @@ export interface KudoTokenInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "safeMint",
-    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "safeTransferFrom(address,address,uint256)",
@@ -165,6 +175,7 @@ export interface KudoTokenInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "mintable", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "minted", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "ownerOf", data: BytesLike): Result;
@@ -319,6 +330,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[number]>;
 
+    minted(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
+
     name(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
@@ -333,6 +349,7 @@ export interface KudoToken extends BaseContract {
     ): Promise<ContractTransaction>;
 
     safeMint(
+      from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -417,6 +434,11 @@ export interface KudoToken extends BaseContract {
     overrides?: CallOverrides
   ): Promise<number>;
 
+  minted(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<number>;
+
   name(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
@@ -431,6 +453,7 @@ export interface KudoToken extends BaseContract {
   ): Promise<ContractTransaction>;
 
   safeMint(
+    from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
     uri: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -515,6 +538,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<number>;
 
+    minted(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<number>;
+
     name(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
@@ -527,10 +555,11 @@ export interface KudoToken extends BaseContract {
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     safeMint(
+      from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<void>;
 
     "safeTransferFrom(address,address,uint256)"(
       from: PromiseOrValue<string>,
@@ -656,6 +685,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    minted(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     name(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
@@ -670,6 +704,7 @@ export interface KudoToken extends BaseContract {
     ): Promise<BigNumber>;
 
     safeMint(
+      from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -755,6 +790,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    minted(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -769,6 +809,7 @@ export interface KudoToken extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     safeMint(
+      from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
       uri: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

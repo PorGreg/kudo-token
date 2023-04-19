@@ -11,6 +11,7 @@ contract KudoToken is ERC721, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
     mapping(address => uint16) public mintable;
+    mapping(address => uint16) public minted;
 
     constructor() ERC721('KudoToken', 'KT') {}
 
@@ -19,19 +20,19 @@ contract KudoToken is ERC721, ERC721URIStorage, Ownable {
     }
 
     function safeMint(
+        address from,
         address to,
         string memory uri
-    ) public onlyOwner returns (uint256) {
+    ) public onlyOwner {
         require(
-            mintable[to] > balanceOf(to),
+            mintable[from] > minted[from],
             'Cannot mint more Kudos to this address'
         );
+        minted[from]++;
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
-
-        return tokenId;
     }
 
     function _beforeTokenTransfer(
