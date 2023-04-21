@@ -8,6 +8,9 @@ import '@openzeppelin/contracts/utils/Counters.sol';
 
 /// @custom:security-contact porgreg@gmail.com
 contract KudoToken is ERC721, ERC721URIStorage, Ownable {
+    event Mint(uint256 tokenId, string cid);
+    event SetMintable(address to, uint16 oldAmount, uint16 newAmount);
+
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
     mapping(address => uint16) public mintable;
@@ -16,23 +19,27 @@ contract KudoToken is ERC721, ERC721URIStorage, Ownable {
     constructor() ERC721('KudoToken', 'KT') {}
 
     function setMintable(address to, uint16 amount) public onlyOwner {
+        uint16 oldAmount = mintable[to];
         mintable[to] = amount;
+        emit SetMintable(to, oldAmount, mintable[to]);
     }
 
     function safeMint(
         address from,
         address to,
-        string memory uri
+        string memory cid
     ) public onlyOwner {
+        require(from != to, '`from` and `to` addresses are the same');
         require(
             mintable[from] > minted[from],
-            'Cannot mint more Kudos to this address'
+            'This address cannot send more Kudo'
         );
         minted[from]++;
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
+        _setTokenURI(tokenId, cid);
+        emit Mint(tokenId, cid);
     }
 
     function _beforeTokenTransfer(
@@ -41,15 +48,26 @@ contract KudoToken is ERC721, ERC721URIStorage, Ownable {
         uint256 tokenId,
         uint256 batchSize
     ) internal override {
-        require(from == address(0), 'You cannot transfer this Kudo');
+        require(
+            from == address(0) || to == address(0),
+            'You cannot transfer this Kudo'
+        );
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function _burn(
         uint256 tokenId
     ) internal override(ERC721, ERC721URIStorage) {
-        require(msg.sender == address(0), 'You cannot burn this Kudo');
         super._burn(tokenId);
+    }
+
+    function burn(uint256 tokenId) public {
+        require(ownerOf(tokenId) == msg.sender, 'Only token owner can burn it');
+        _burn(tokenId);
+    }
+
+    function _baseURI() internal pure override returns (string memory) {
+        return 'ipfs://';
     }
 
     function tokenURI(

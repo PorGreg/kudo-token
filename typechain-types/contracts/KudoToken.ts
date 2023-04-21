@@ -31,6 +31,7 @@ export interface KudoTokenInterface extends utils.Interface {
   functions: {
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
+    "burn(uint256)": FunctionFragment;
     "getApproved(uint256)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
     "mintable(address)": FunctionFragment;
@@ -55,6 +56,7 @@ export interface KudoTokenInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "approve"
       | "balanceOf"
+      | "burn"
       | "getApproved"
       | "isApprovedForAll"
       | "mintable"
@@ -82,6 +84,10 @@ export interface KudoTokenInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "balanceOf",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "burn",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "getApproved",
@@ -166,6 +172,7 @@ export interface KudoTokenInterface extends utils.Interface {
 
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getApproved",
     data: BytesLike
@@ -218,13 +225,17 @@ export interface KudoTokenInterface extends utils.Interface {
   events: {
     "Approval(address,address,uint256)": EventFragment;
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "Mint(uint256,string)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "SetMintable(address,uint16,uint16)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Mint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SetMintable"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
@@ -252,6 +263,14 @@ export type ApprovalForAllEvent = TypedEvent<
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
 
+export interface MintEventObject {
+  tokenId: BigNumber;
+  cid: string;
+}
+export type MintEvent = TypedEvent<[BigNumber, string], MintEventObject>;
+
+export type MintEventFilter = TypedEventFilter<MintEvent>;
+
 export interface OwnershipTransferredEventObject {
   previousOwner: string;
   newOwner: string;
@@ -263,6 +282,18 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface SetMintableEventObject {
+  to: string;
+  oldAmount: number;
+  newAmount: number;
+}
+export type SetMintableEvent = TypedEvent<
+  [string, number, number],
+  SetMintableEventObject
+>;
+
+export type SetMintableEventFilter = TypedEventFilter<SetMintableEvent>;
 
 export interface TransferEventObject {
   from: string;
@@ -314,6 +345,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    burn(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -351,7 +387,7 @@ export interface KudoToken extends BaseContract {
     safeMint(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      uri: PromiseOrValue<string>,
+      cid: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -418,6 +454,11 @@ export interface KudoToken extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  burn(
+    tokenId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   getApproved(
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -455,7 +496,7 @@ export interface KudoToken extends BaseContract {
   safeMint(
     from: PromiseOrValue<string>,
     to: PromiseOrValue<string>,
-    uri: PromiseOrValue<string>,
+    cid: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -522,6 +563,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    burn(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -557,7 +603,7 @@ export interface KudoToken extends BaseContract {
     safeMint(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      uri: PromiseOrValue<string>,
+      cid: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -636,6 +682,9 @@ export interface KudoToken extends BaseContract {
       approved?: null
     ): ApprovalForAllEventFilter;
 
+    "Mint(uint256,string)"(tokenId?: null, cid?: null): MintEventFilter;
+    Mint(tokenId?: null, cid?: null): MintEventFilter;
+
     "OwnershipTransferred(address,address)"(
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
@@ -644,6 +693,17 @@ export interface KudoToken extends BaseContract {
       previousOwner?: PromiseOrValue<string> | null,
       newOwner?: PromiseOrValue<string> | null
     ): OwnershipTransferredEventFilter;
+
+    "SetMintable(address,uint16,uint16)"(
+      to?: null,
+      oldAmount?: null,
+      newAmount?: null
+    ): SetMintableEventFilter;
+    SetMintable(
+      to?: null,
+      oldAmount?: null,
+      newAmount?: null
+    ): SetMintableEventFilter;
 
     "Transfer(address,address,uint256)"(
       from?: PromiseOrValue<string> | null,
@@ -667,6 +727,11 @@ export interface KudoToken extends BaseContract {
     balanceOf(
       owner: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    burn(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     getApproved(
@@ -706,7 +771,7 @@ export interface KudoToken extends BaseContract {
     safeMint(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      uri: PromiseOrValue<string>,
+      cid: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -774,6 +839,11 @@ export interface KudoToken extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    burn(
+      tokenId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     getApproved(
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -811,7 +881,7 @@ export interface KudoToken extends BaseContract {
     safeMint(
       from: PromiseOrValue<string>,
       to: PromiseOrValue<string>,
-      uri: PromiseOrValue<string>,
+      cid: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

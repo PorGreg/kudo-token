@@ -1,7 +1,8 @@
 import { KudoData } from '@/interfaces/kudo-token'
 import { uploadDataToIPFS } from '@/libs/ipfs'
 import { generateMetadata, generateSvgFromKudoData } from '@/libs/kudo-token'
-import { getKudoTokenContract } from '@/libs/web3'
+import { prisma } from '@/libs/prisma'
+import { KUDO_TOKEN_ADDRESS, getKudoTokenContract } from '@/libs/web3'
 import { NextApiHandler } from 'next'
 
 const handler: NextApiHandler = async (req, res) => {
@@ -18,8 +19,7 @@ const handler: NextApiHandler = async (req, res) => {
 
     // generate metadata and upload to IPFS
     const metadata = generateMetadata(kudoData, svgCid)
-    const metadataJson = JSON.stringify(metadata)
-    const metadataIpfs = 'ipfs://' + (await uploadDataToIPFS(metadataJson))
+    const metadataCid = await uploadDataToIPFS(JSON.stringify(metadata))
 
     // mint token with the metadata URL
     const kudoToken = getKudoTokenContract()
@@ -27,13 +27,37 @@ const handler: NextApiHandler = async (req, res) => {
       const params: Parameters<typeof kudoToken.safeMint> = [
         kudoData.fromAddress,
         kudoData.toAddress,
-        metadataIpfs,
+        metadataCid,
       ]
-      // static call first to check possible errors
+      // static call first to catch possible errors
       await kudoToken.callStatic.safeMint(...params)
+      // create a listener to catch the mined transaction's event (Mint)
+      const tokenIdPromise = new Promise<number | null>((resolve) => {
+        setTimeout(() => resolve(null), 30000)
+        kudoToken.on(kudoToken.filters['Mint(uint256,string)'](), (id, cid) => {
+          if (cid === metadataCid) {
+            resolve(id.toNumber())
+          }
+        })
+      })
       // final call
-      const result = await kudoToken.safeMint(...params)
-      return res.status(200).json({ result })
+      const [_mintResult, tokenId] = await Promise.all([
+        kudoToken.safeMint(...params),
+        tokenIdPromise,
+      ])
+
+      // save the minted token
+      const token = await prisma.mintedToken.create({
+        data: {
+          contract: KUDO_TOKEN_ADDRESS,
+          tokenId,
+          imageCid: svgCid,
+          metadataUri: 'ipfs://' + metadataCid,
+          ...kudoData,
+        },
+      })
+
+      return res.status(200).json({ token })
     } catch (e: any) {
       console.error(e)
       const message = e.reason ?? 'Unknown error'
